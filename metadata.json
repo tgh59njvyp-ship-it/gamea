@@ -1,0 +1,6 @@
+{
+  "name": "3D Supermarket Simulator",
+  "description": "リアルな3D環境で店舗の経営、棚の陳列、価格設定、レジでの会計処理、在庫発注を行う本格スーパーマーケットシミュレーター",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
