@@ -18,7 +18,7 @@ import {
   INITIAL_PRODUCTS,
   INITIAL_SHELVES,
   INITIAL_STAFF,
-  CHECKOUT_COUNTER_POSITION,
+  DEFAULT_CHECKOUT_POSITION,
   DELIVERY_DROP_POSITION,
 } from './utils/constants';
 import { soundManager } from './utils/audio';
@@ -28,6 +28,8 @@ import { HUD } from './components/ui/HUD';
 import { CheckoutInterface } from './components/ui/CheckoutInterface';
 import { StoreComputerModal } from './components/ui/StoreComputerModal';
 import { DaySummaryModal } from './components/ui/DaySummaryModal';
+import { OnboardingModal } from './components/ui/OnboardingModal';
+import { LayoutEditModal } from './components/ui/LayoutEditModal';
 
 export default function App() {
   // Initialize Products Map
@@ -45,6 +47,12 @@ export default function App() {
         const parsed = JSON.parse(saved);
         return {
           ...parsed,
+          storeName: parsed.storeName ?? 'MY SUPERMARKET',
+          storeSignColor: parsed.storeSignColor ?? '#0284c7',
+          isStoreNameConfigured: parsed.isStoreNameConfigured ?? false,
+          isEditLayoutMode: false,
+          checkoutPosition: parsed.checkoutPosition ?? [-0.8, 0, 2.5],
+          checkoutRotation: parsed.checkoutRotation ?? 0,
           isStoreOpen: parsed.isStoreOpen ?? false,
           unlockedLicenses: parsed.unlockedLicenses ?? ['license_starter', 'license_fresh'],
           unlockedStorage: parsed.unlockedStorage ?? false,
@@ -52,7 +60,7 @@ export default function App() {
             revenue: 0,
             wholesaleExpenses: 0,
             staffWages: 0,
-            rentUtilities: 1500,
+            rentUtilities: 50,
             itemsSold: 0,
             customersServed: 0,
             happyCustomers: 0,
@@ -68,9 +76,14 @@ export default function App() {
     return {
       day: 1,
       timeOfDay: '09:00',
-      cash: 12000,
+      cash: 500.0,
       reputation: 75,
-      storeName: 'マルエツ 3Dマート',
+      storeName: 'MY SUPERMARKET',
+      storeSignColor: '#0284c7',
+      isStoreNameConfigured: false,
+      isEditLayoutMode: false,
+      checkoutPosition: [-0.8, 0, 2.5],
+      checkoutRotation: 0,
       storeLevel: 1,
       exp: 0,
       nextLevelExp: 100,
@@ -81,8 +94,8 @@ export default function App() {
       stockBoxes: [
         {
           id: 'box_init_1',
-          productId: 'prod_milk',
-          count: 6,
+          productId: 'prod_bread',
+          count: 10,
           position: [3.2, 0.2, 4.5],
           isHeldByPlayer: false,
         },
@@ -93,7 +106,7 @@ export default function App() {
         revenue: 0,
         wholesaleExpenses: 0,
         staffWages: 0,
-        rentUtilities: 1500,
+        rentUtilities: 50,
         itemsSold: 0,
         customersServed: 0,
         happyCustomers: 0,
@@ -116,6 +129,54 @@ export default function App() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState<boolean>(false);
   const [isLaptopModalOpen, setIsLaptopModalOpen] = useState<boolean>(false);
   const [scannedItemIndex, setScannedItemIndex] = useState<number>(0);
+
+  // Handle Onboarding Name Completion
+  const handleCompleteOnboarding = (storeName: string, signColor: string) => {
+    setGameState((prev) => ({
+      ...prev,
+      storeName,
+      storeSignColor: signColor,
+      isStoreNameConfigured: true,
+    }));
+  };
+
+  // Layout Editing Register Move & Rotate
+  const handleToggleLayoutEdit = () => {
+    soundManager.playDoorChime();
+    setGameState((prev) => ({
+      ...prev,
+      isEditLayoutMode: !prev.isEditLayoutMode,
+    }));
+  };
+
+  const handleMoveRegister = (dx: number, dz: number) => {
+    setGameState((prev) => {
+      const [x, y, z] = prev.checkoutPosition;
+      return {
+        ...prev,
+        checkoutPosition: [
+          Math.max(-4, Math.min(4, x + dx)),
+          y,
+          Math.max(-2, Math.min(6, z + dz)),
+        ],
+      };
+    });
+  };
+
+  const handleRotateRegister = () => {
+    setGameState((prev) => ({
+      ...prev,
+      checkoutRotation: (prev.checkoutRotation + Math.PI / 2) % (Math.PI * 2),
+    }));
+  };
+
+  const handleResetRegisterPosition = () => {
+    setGameState((prev) => ({
+      ...prev,
+      checkoutPosition: [-0.8, 0, 2.5],
+      checkoutRotation: 0,
+    }));
+  };
 
   // Save game state locally
   useEffect(() => {
@@ -452,11 +513,11 @@ export default function App() {
   };
 
   const handleUnlockStorage = () => {
-    if (gameState.cash < 5000) return;
+    if (gameState.cash < 800) return;
 
     setGameState((prev) => ({
       ...prev,
-      cash: prev.cash - 5000,
+      cash: prev.cash - 800,
       unlockedStorage: true,
     }));
   };
@@ -561,9 +622,31 @@ export default function App() {
         onDropBox={handleDropBox}
         onToggleSound={handleToggleSound}
         onToggleStoreOpen={handleToggleStoreOpen}
+        onToggleLayoutEdit={handleToggleLayoutEdit}
         onEndDay={handleEndDay}
         isMuted={isMuted}
       />
+
+      {/* Onboarding Modal: Store Exterior Name & Sign Setup */}
+      {!gameState.isStoreNameConfigured && (
+        <OnboardingModal
+          initialStoreName={gameState.storeName}
+          initialSignColor={gameState.storeSignColor || '#0284c7'}
+          onComplete={handleCompleteOnboarding}
+        />
+      )}
+
+      {/* Layout Editing Modal */}
+      {gameState.isEditLayoutMode && (
+        <LayoutEditModal
+          checkoutPosition={gameState.checkoutPosition}
+          checkoutRotation={gameState.checkoutRotation}
+          onMoveRegister={handleMoveRegister}
+          onRotateRegister={handleRotateRegister}
+          onResetPosition={handleResetRegisterPosition}
+          onClose={handleToggleLayoutEdit}
+        />
+      )}
 
       {/* Cashier Register Checkout Modal */}
       {isRegisterModalOpen && (

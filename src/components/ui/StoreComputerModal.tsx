@@ -216,7 +216,7 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
                   </p>
                 </div>
                 <div className="bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 text-xs font-bold text-emerald-400">
-                  現在資金: ¥{gameState.cash.toLocaleString()}
+                  現在資金: ${gameState.cash.toFixed(2)}
                 </div>
               </div>
 
@@ -254,12 +254,12 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
                           <div className="flex justify-between text-slate-400">
                             <span>卸単価:</span>
                             <span className="text-slate-200 font-semibold">
-                              ¥{product.wholesaleCost} /点
+                              ${product.wholesaleCost.toFixed(2)} /点
                             </span>
                           </div>
                           <div className="flex justify-between font-bold pt-1 border-t border-slate-800">
                             <span className="text-slate-300">発注箱価格:</span>
-                            <span className="text-emerald-400">¥{boxPrice.toLocaleString()}</span>
+                            <span className="text-emerald-400">${boxPrice.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
@@ -278,7 +278,7 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
                         }`}
                       >
                         <PackagePlus className="w-4 h-4" />
-                        <span>1箱発注する (¥{boxPrice.toLocaleString()})</span>
+                        <span>1箱発注する (${boxPrice.toFixed(2)})</span>
                       </button>
                     </div>
                   );
@@ -293,7 +293,7 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
               <div className="mb-4">
                 <h4 className="font-bold text-lg text-white">販売価格の設定</h4>
                 <p className="text-xs text-slate-400">
-                  適正な販売価格を設定しましょう。高すぎるとお客さんが怒って通り過ぎ、安すぎると利益が出ません。
+                  適正な販売価格を設定しましょう。高すぎるとお客さんが買わずに帰り、安すぎると利益が出ません。
                 </p>
               </div>
 
@@ -316,7 +316,7 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
                         <div>
                           <h5 className="font-bold text-sm text-white">{product.name}</h5>
                           <div className="text-xs text-slate-400">
-                            仕入値: ¥{product.wholesaleCost} | 推奨価格: ¥{product.recommendedPrice}
+                            仕入値: ${product.wholesaleCost.toFixed(2)} | 推奨価格: ${product.recommendedPrice.toFixed(2)}
                           </div>
                         </div>
                       </div>
@@ -343,18 +343,26 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
                           <button
                             id={`btn-price-down-${product.id}`}
                             onClick={() =>
-                              onUpdatePrice(product.id, Math.max(10, product.currentPrice - 10))
+                              onUpdatePrice(
+                                product.id,
+                                Math.max(0.1, Number((product.currentPrice - 0.25).toFixed(2)))
+                              )
                             }
                             className="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-lg text-white font-bold flex items-center justify-center active:scale-95"
                           >
                             -
                           </button>
                           <span className="font-extrabold text-emerald-400 text-sm min-w-16 text-center">
-                            ¥{product.currentPrice}
+                            ${product.currentPrice.toFixed(2)}
                           </span>
                           <button
                             id={`btn-price-up-${product.id}`}
-                            onClick={() => onUpdatePrice(product.id, product.currentPrice + 10)}
+                            onClick={() =>
+                              onUpdatePrice(
+                                product.id,
+                                Number((product.currentPrice + 0.25).toFixed(2))
+                              )
+                            }
                             className="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-lg text-white font-bold flex items-center justify-center active:scale-95"
                           >
                             +
@@ -421,7 +429,7 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
                           className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:bg-slate-700 disabled:from-slate-700 disabled:to-slate-700 text-slate-950 disabled:text-slate-400 font-extrabold rounded-xl text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-1.5"
                         >
                           <Sparkles className="w-4 h-4 text-slate-950" />
-                          <span>ライセンスを取得する (¥{lic.cost.toLocaleString()})</span>
+                          <span>ライセンスを取得する (${lic.cost.toFixed(2)})</span>
                         </button>
                       )}
                     </div>
@@ -437,17 +445,17 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
               <div className="mb-4">
                 <h4 className="font-bold text-lg text-white">什器・設備投資・店舗拡張</h4>
                 <p className="text-xs text-slate-400">
-                  棚を増設して陳列量を増やしたり、バックルーム倉庫の拡張・スタッフ雇用で効率化を図りましょう。
+                  棚を増設して陳列量を増やしたり、隣の倉庫（$800で拡張）やスタッフ雇用で効率化を図りましょう。
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {/* Unlock Backroom Storage */}
+                {/* Unlock Backroom Storage ($800) */}
                 <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <h5 className="font-bold text-base text-white flex items-center gap-2">
-                        <Box className="w-5 h-5 text-amber-400" /> バックルーム倉庫の解放
+                        <Box className="w-5 h-5 text-amber-400" /> 隣の倉庫部屋の解放
                       </h5>
                       {gameState.unlockedStorage && (
                         <span className="bg-emerald-950 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.5 rounded-md">
@@ -456,20 +464,20 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
                       )}
                     </div>
                     <p className="text-xs text-slate-400 mb-3">
-                      店舗裏手に広大な在庫保管倉庫をオープン。届いた段ボールをまとめてストック可能！
+                      店舗隣のバックルーム倉庫を解放。届いた段ボールをまとめて保管できます！
                     </p>
                   </div>
                   {!gameState.unlockedStorage ? (
                     <button
                       id="btn-unlock-storage"
-                      disabled={gameState.cash < 5000}
+                      disabled={gameState.cash < 800}
                       onClick={() => {
                         soundManager.playLevelUp();
                         onUnlockStorage();
                       }}
-                      className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:bg-slate-700 text-slate-950 font-extrabold rounded-xl text-xs transition-all"
+                      className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:bg-slate-700 text-slate-950 font-extrabold rounded-xl text-xs transition-all cursor-pointer"
                     >
-                      倉庫を解放する (¥5,000)
+                      倉庫を解放する ($800.00)
                     </button>
                   ) : (
                     <div className="text-center text-xs font-bold text-emerald-400 bg-emerald-950/40 py-2 rounded-xl border border-emerald-500/30">
@@ -483,19 +491,19 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
                   <div>
                     <h5 className="font-bold text-base text-white mb-1">ドライ商品棚の増設</h5>
                     <p className="text-xs text-slate-400 mb-3">
-                      スナックやカップ麺、日用品を大量に陳列できる3段メタルシェルフ。
+                      スナックや小麦粉、日用品を大量に陳列できるメタルシェルフ。
                     </p>
                   </div>
                   <button
                     id="btn-buy-standard-rack"
-                    disabled={gameState.cash < 8000}
+                    disabled={gameState.cash < 300}
                     onClick={() => {
                       soundManager.playLevelUp();
                       onBuyShelf(ShelfType.STANDARD_RACK);
                     }}
                     className="w-full py-3 bg-sky-500 hover:bg-sky-400 disabled:bg-slate-700 text-white font-bold rounded-xl text-xs transition-all"
                   >
-                    棚を設置する (¥8,000)
+                    棚を設置する ($300.00)
                   </button>
                 </div>
 
@@ -504,19 +512,19 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
                   <div>
                     <h5 className="font-bold text-base text-white mb-1">冷蔵ショーケースの増設</h5>
                     <p className="text-xs text-slate-400 mb-3">
-                      牛乳、ジュース、ソーダ、精肉パックを冷やして陳列できるガラス棚。
+                      牛乳、ジュース、ソーダを冷やして陳列できるガラス棚。
                     </p>
                   </div>
                   <button
                     id="btn-buy-refrigerator"
-                    disabled={gameState.cash < 15000}
+                    disabled={gameState.cash < 600}
                     onClick={() => {
                       soundManager.playLevelUp();
                       onBuyShelf(ShelfType.REFRIGERATOR);
                     }}
                     className="w-full py-3 bg-sky-500 hover:bg-sky-400 disabled:bg-slate-700 text-white font-bold rounded-xl text-xs transition-all"
                   >
-                    冷蔵棚を設置する (¥15,000)
+                    冷蔵棚を設置する ($600.00)
                   </button>
                 </div>
               </div>
@@ -532,7 +540,7 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
                     <div>
                       <h6 className="font-bold text-sm text-white">{st.name}</h6>
                       <p className="text-xs text-slate-400">
-                        日給: ¥{st.dailySalary.toLocaleString()} | 処理速度: 高速
+                        日給: ${st.dailySalary.toFixed(2)} | 処理速度: 高速
                       </p>
                     </div>
 
@@ -550,7 +558,7 @@ export const StoreComputerModal: React.FC<StoreComputerModalProps> = ({
                         }}
                         className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl transition-all"
                       >
-                        雇用する (日給¥{st.dailySalary})
+                        雇用する (日給${st.dailySalary.toFixed(2)})
                       </button>
                     )}
                   </div>

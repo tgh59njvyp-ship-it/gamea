@@ -60,16 +60,21 @@ export const CheckoutInterface: React.FC<CheckoutInterfaceProps> = ({
   const totalBill = customer.cart.reduce((sum, item) => sum + item.pricePaid * item.quantity, 0);
 
   // Cash change handling state
-  const cashGiven = customer.paymentMethod === 'cash' ? (customer.cashGiven || Math.ceil(totalBill / 1000) * 1000) : totalBill;
-  const requiredChange = Math.max(0, cashGiven - totalBill);
+  const cashGiven =
+    customer.paymentMethod === 'cash'
+      ? customer.cashGiven || Math.ceil(totalBill + 5)
+      : totalBill;
+  const requiredChange = Math.max(0, Number((cashGiven - totalBill).toFixed(2)));
   const [changeSelected, setChangeSelected] = useState<number>(0);
 
   const isAllScanned = scannedIndex >= totalItems;
-  const isChangeCorrect = customer.paymentMethod === 'card' || changeSelected === requiredChange;
+  const isChangeCorrect =
+    customer.paymentMethod === 'card' ||
+    Math.abs(changeSelected - requiredChange) < 0.01;
 
   const handleAddChange = (value: number) => {
     soundManager.playCoin();
-    setChangeSelected((prev) => prev + value);
+    setChangeSelected((prev) => Number((prev + value).toFixed(2)));
   };
 
   const handleClearChange = () => {
@@ -215,15 +220,15 @@ export const CheckoutInterface: React.FC<CheckoutInterfaceProps> = ({
             {/* Total Summary */}
             <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-4">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs text-slate-400 font-medium">お小計 (スキャン済み)</span>
+                <span className="text-xs text-slate-400 font-medium">小計 (スキャン済み)</span>
                 <span className="text-xl font-extrabold text-white">
-                  ¥{scannedItems.reduce((s, i) => s + i.pricePaid, 0).toLocaleString()}
+                  ${scannedItems.reduce((s, i) => s + i.pricePaid, 0).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs text-slate-500 pt-2 border-t border-slate-800">
                 <span>合計金額 (全{totalItems}点)</span>
                 <span className="text-emerald-400 font-bold text-sm">
-                  ¥{totalBill.toLocaleString()}
+                  ${totalBill.toFixed(2)}
                 </span>
               </div>
             </div>
@@ -233,12 +238,12 @@ export const CheckoutInterface: React.FC<CheckoutInterfaceProps> = ({
               <div className="space-y-3">
                 <div className="flex justify-between text-xs bg-slate-800/60 p-3 rounded-xl border border-slate-700/60">
                   <span className="text-slate-300">お客様のお預かり金額:</span>
-                  <span className="font-bold text-amber-300 text-sm">¥{cashGiven.toLocaleString()}</span>
+                  <span className="font-bold text-amber-300 text-sm">${cashGiven.toFixed(2)}</span>
                 </div>
 
                 <div className="flex justify-between text-xs bg-slate-800/60 p-3 rounded-xl border border-slate-700/60">
                   <span className="text-slate-300">必要なお釣り (計算値):</span>
-                  <span className="font-bold text-emerald-400 text-sm">¥{requiredChange.toLocaleString()}</span>
+                  <span className="font-bold text-emerald-400 text-sm">${requiredChange.toFixed(2)}</span>
                 </div>
 
                 {/* Change Selector Drawer */}
@@ -254,16 +259,30 @@ export const CheckoutInterface: React.FC<CheckoutInterfaceProps> = ({
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-2 mb-3">
-                    {[10, 50, 100, 500].map((val) => (
+                  <div className="grid grid-cols-4 gap-1.5 mb-2">
+                    {[0.05, 0.10, 0.25, 1.0].map((val) => (
                       <button
                         key={`coin_${val}`}
                         id={`btn-coin-${val}`}
                         onClick={() => handleAddChange(val)}
-                        className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-amber-300 text-xs font-extrabold py-2.5 rounded-xl border border-slate-700 flex flex-col items-center justify-center gap-0.5 shadow-sm"
+                        className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-amber-300 text-xs font-bold py-2 rounded-xl border border-amber-500/30 flex flex-col items-center justify-center shadow-sm"
                       >
-                        <Coins className="w-3.5 h-3.5 text-amber-400" />
-                        <span>+¥{val}</span>
+                        <Coins className="w-3.5 h-3.5 text-amber-400 mb-0.5" />
+                        <span>+${val < 1 ? val.toFixed(2) : val.toFixed(0)}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-1.5 mb-3">
+                    {[5.0, 10.0, 20.0, 50.0].map((val) => (
+                      <button
+                        key={`bill_${val}`}
+                        id={`btn-bill-${val}`}
+                        onClick={() => handleAddChange(val)}
+                        className="bg-emerald-950/80 hover:bg-emerald-900 active:scale-95 text-emerald-300 text-xs font-bold py-2 rounded-xl border border-emerald-500/40 flex flex-col items-center justify-center shadow-sm"
+                      >
+                        <Banknote className="w-3.5 h-3.5 text-emerald-400 mb-0.5" />
+                        <span>+${val.toFixed(0)}</span>
                       </button>
                     ))}
                   </div>
@@ -272,14 +291,14 @@ export const CheckoutInterface: React.FC<CheckoutInterfaceProps> = ({
                     <span className="text-slate-400">渡し予定のお釣り:</span>
                     <span
                       className={`font-extrabold text-base ${
-                        changeSelected === requiredChange
+                        Math.abs(changeSelected - requiredChange) < 0.01
                           ? 'text-emerald-400'
                           : changeSelected > requiredChange
                           ? 'text-rose-400'
                           : 'text-amber-400'
                       }`}
                     >
-                      ¥{changeSelected.toLocaleString()}
+                      ${changeSelected.toFixed(2)}
                     </span>
                   </div>
                 </div>

@@ -9,13 +9,14 @@ import {
   CustomerState,
 } from '../../types/game';
 import {
-  CHECKOUT_COUNTER_POSITION,
+  DEFAULT_CHECKOUT_POSITION,
   BACKROOM_TERMINAL_POSITION,
   STORE_SIGN_POSITION,
   TRASH_BIN_POSITION,
 } from '../../utils/constants';
 import { soundManager } from '../../utils/audio';
 import { TouchController } from '../ui/TouchController';
+import { createProduct3DMesh, createCardboardBoxTexture } from '../../utils/productMeshBuilder';
 
 interface SupermarketCanvasProps {
   gameState: GameState;
@@ -169,11 +170,41 @@ export const SupermarketCanvas: React.FC<SupermarketCanvasProps> = ({
     const signGroup = new THREE.Group();
     signGroup.position.set(0, 4.1, 6.05);
     const signBox = new THREE.Mesh(
-      new THREE.BoxGeometry(5.5, 0.8, 0.15),
-      new THREE.MeshStandardMaterial({ color: '#0284c7', roughness: 0.2 })
+      new THREE.BoxGeometry(6.5, 1.0, 0.2),
+      new THREE.MeshStandardMaterial({
+        color: gameState.storeSignColor || '#0284c7',
+        roughness: 0.2,
+      })
     );
     signGroup.add(signBox);
     scene.add(signGroup);
+
+    // Adjacent Storage Room (Unlocked or Locked with $800 Sign)
+    const storageGroup = new THREE.Group();
+    storageGroup.position.set(7.5, 0, 1);
+
+    // Storage Room Floor
+    const storageFloor = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.8, 8),
+      new THREE.MeshStandardMaterial({
+        color: gameState.unlockedStorage ? '#334155' : '#1e293b',
+        roughness: 0.7,
+      })
+    );
+    storageFloor.rotation.x = -Math.PI / 2;
+    storageFloor.position.set(0, 0.001, 0);
+    storageGroup.add(storageFloor);
+
+    // Storage Door Wall Barrier
+    const doorWallMat = new THREE.MeshStandardMaterial({ color: '#475569', roughness: 0.5 });
+    const storageDoorMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.2, 3.8, 3.0),
+      doorWallMat
+    );
+    storageDoorMesh.position.set(-2.5, 1.9, gameState.unlockedStorage ? -2.2 : 0);
+    storageGroup.add(storageDoorMesh);
+
+    scene.add(storageGroup);
 
     // Automatic Glass Doors
     const isDoorOpen = gameState.customers.some(c => c.state === CustomerState.ENTERING || c.state === CustomerState.LEAVING);
@@ -244,7 +275,7 @@ export const SupermarketCanvas: React.FC<SupermarketCanvasProps> = ({
                 const px = xOff + (col - 0.5) * 0.18;
                 const pz = (row - 1) * 0.12;
 
-                const prodMesh = createProductMesh(product.shape, product.color);
+                const prodMesh = createProduct3DMesh(product.id, product.shape, product.color, product.name);
                 prodMesh.position.set(px, yH + 0.02, pz);
                 shelfGroup.add(prodMesh);
               }
@@ -292,7 +323,7 @@ export const SupermarketCanvas: React.FC<SupermarketCanvasProps> = ({
                 const px = xOff + (col - 0.5) * 0.16;
                 const pz = (row - 1.5) * 0.11;
 
-                const prodMesh = createProductMesh(product.shape, product.color);
+                const prodMesh = createProduct3DMesh(product.id, product.shape, product.color, product.name);
                 prodMesh.position.set(px, yH + 0.02, pz);
                 shelfGroup.add(prodMesh);
               }
@@ -328,7 +359,7 @@ export const SupermarketCanvas: React.FC<SupermarketCanvasProps> = ({
               const px = xOff + (col - 1) * 0.15;
               const pz = (row - 0.5) * 0.16;
 
-              const prodMesh = createProductMesh(product.shape, product.color);
+              const prodMesh = createProduct3DMesh(product.id, product.shape, product.color, product.name);
               prodMesh.position.set(px, 0.82, pz);
               shelfGroup.add(prodMesh);
             }
@@ -339,32 +370,68 @@ export const SupermarketCanvas: React.FC<SupermarketCanvasProps> = ({
       scene.add(shelfGroup);
     });
 
-    // 7. CHECKOUT COUNTER
+    // 7. SUPERMARKET SIMULATOR CHECKOUT COUNTER
+    const checkoutPos = gameState.checkoutPosition || DEFAULT_CHECKOUT_POSITION;
     const checkoutGroup = new THREE.Group();
-    checkoutGroup.position.set(
-      CHECKOUT_COUNTER_POSITION[0],
-      CHECKOUT_COUNTER_POSITION[1],
-      CHECKOUT_COUNTER_POSITION[2]
-    );
+    checkoutGroup.position.set(checkoutPos[0], checkoutPos[1], checkoutPos[2]);
+    checkoutGroup.rotation.y = gameState.checkoutRotation || 0;
     
+    // Main Counter Desk
     const counterDesk = new THREE.Mesh(
-      new THREE.BoxGeometry(2.2, 0.9, 1.1),
-      new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.4 })
+      new THREE.BoxGeometry(2.4, 0.9, 1.2),
+      new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.3 })
     );
     counterDesk.position.set(0, 0.45, 0);
     checkoutGroup.add(counterDesk);
 
+    // Black Rubber Conveyor Belt
+    const conveyorBelt = new THREE.Mesh(
+      new THREE.BoxGeometry(1.5, 0.04, 0.65),
+      new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.8 })
+    );
+    conveyorBelt.position.set(-0.25, 0.92, 0);
+    checkoutGroup.add(conveyorBelt);
+
+    // Silver Conveyor Guide Rails
+    const railMat = new THREE.MeshStandardMaterial({ color: '#94a3b8', metalness: 0.9, roughness: 0.2 });
+    const railFront = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.08, 0.04), railMat);
+    railFront.position.set(-0.25, 0.95, -0.34);
+    checkoutGroup.add(railFront);
+    const railBack = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.08, 0.04), railMat);
+    railBack.position.set(-0.25, 0.95, 0.34);
+    checkoutGroup.add(railBack);
+
+    // POS Barcode Scanner Unit with Red Glass Laser Window
+    const scannerBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.24, 0.16, 0.24),
+      new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.3 })
+    );
+    scannerBody.position.set(0.45, 0.98, 0.15);
+    checkoutGroup.add(scannerBody);
+
+    const laserGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(0.16, 0.02, 0.16),
+      new THREE.MeshStandardMaterial({
+        color: '#ef4444',
+        emissive: '#dc2626',
+        emissiveIntensity: 0.8,
+      })
+    );
+    laserGlass.position.set(0.45, 1.07, 0.15);
+    checkoutGroup.add(laserGlass);
+
+    // Cashier POS Monitor Screen
     const monitor = new THREE.Mesh(
-      new THREE.BoxGeometry(0.45, 0.35, 0.05),
+      new THREE.BoxGeometry(0.48, 0.38, 0.05),
       new THREE.MeshStandardMaterial({ color: '#0284c7', roughness: 0.2 })
     );
-    monitor.position.set(0.6, 1.35, 0.2);
-    monitor.rotation.set(0, -0.4, 0.2);
+    monitor.position.set(0.65, 1.35, -0.15);
+    monitor.rotation.set(0, -0.3, 0.1);
     checkoutGroup.add(monitor);
 
     // Clickable Register Target
     const registerHit = new THREE.Mesh(
-      new THREE.BoxGeometry(1.2, 0.6, 0.8),
+      new THREE.BoxGeometry(1.4, 0.7, 0.9),
       new THREE.MeshBasicMaterial({ visible: false })
     );
     registerHit.position.set(0.4, 1.2, 0);
@@ -430,9 +497,20 @@ export const SupermarketCanvas: React.FC<SupermarketCanvasProps> = ({
       if (box.isHeldByPlayer) return;
 
       const product = productsMap.get(box.productId);
+      const boxTex = createCardboardBoxTexture(
+        product?.name || 'SUPERMARKET ITEMS',
+        box.count || product?.boxQuantity || 10,
+        product?.color || '#b45309'
+      );
+
+      const boxMat = new THREE.MeshStandardMaterial({
+        map: boxTex,
+        roughness: 0.8,
+      });
+
       const boxMesh = new THREE.Mesh(
         new THREE.BoxGeometry(0.55, 0.36, 0.45),
-        new THREE.MeshStandardMaterial({ color: '#b45309', roughness: 0.9 })
+        boxMat
       );
       boxMesh.position.set(box.position[0], box.position[1], box.position[2]);
       boxMesh.userData = { type: 'box', boxId: box.id, product };
@@ -688,7 +766,11 @@ export const SupermarketCanvas: React.FC<SupermarketCanvasProps> = ({
       }
 
       // Camera positioning & keyboard / virtual joystick movement
-      if (gameState.cameraMode === 'first_person') {
+      if (!gameState.isStoreNameConfigured) {
+        // Exterior view focusing on the store entrance & sign board
+        camera.position.set(0, 2.5, 10.5);
+        camera.lookAt(0, 3.2, 6);
+      } else if (gameState.cameraMode === 'first_person') {
         const speed = 0.08;
         const moveDir = new THREE.Vector3();
 

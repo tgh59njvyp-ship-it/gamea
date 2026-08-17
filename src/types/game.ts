@@ -128,16 +128,21 @@ export interface StaffData {
 export interface GameState {
   day: number;
   timeOfDay: string; // "09:00", "14:30"
-  cash: number;
+  cash: number; // in USD ($500 starting)
   reputation: number; // 0 to 100
   storeName: string;
+  storeSignColor: string; // '#0284c7' etc
+  isStoreNameConfigured: boolean; // false triggers onboarding exterior
   storeLevel: number;
   exp: number;
   nextLevelExp: number;
   isStoreOpen: boolean; // OPEN / CLOSED door sign
-  unlockedStorage: boolean; // 倉庫バックルーム拡張
+  unlockedStorage: boolean; // 隣の倉庫 ($800)
   unlockedLicenses: string[]; // Licensed product categories
   shelves: ShelfData[];
+  checkoutPosition: [number, number, number]; // [x, y, z] moveable register
+  checkoutRotation: number; // rotation in rad
+  isEditLayoutMode: boolean; // true = moving furniture/register
   stockBoxes: StockBoxData[];
   customers: CustomerData[];
   financialHistory: FinancialRecord[];
@@ -146,7 +151,7 @@ export interface GameState {
   staff: StaffData[];
   heldBoxId: string | null;
   selectedTool: 'hand' | 'scanner' | 'box';
-  cameraMode: 'first_person' | 'overhead';
+  cameraMode: 'first_person' | 'overhead' | 'exterior';
   isRegisterActive: boolean;
   activeCheckoutCustomer: CustomerData | null;
 }
