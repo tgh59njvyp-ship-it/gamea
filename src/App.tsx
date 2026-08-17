@@ -30,6 +30,7 @@ import { StoreComputerModal } from './components/ui/StoreComputerModal';
 import { DaySummaryModal } from './components/ui/DaySummaryModal';
 import { OnboardingModal } from './components/ui/OnboardingModal';
 import { LayoutEditModal } from './components/ui/LayoutEditModal';
+import { ResetConfirmModal } from './components/ui/ResetConfirmModal';
 
 export default function App() {
   // Initialize Products Map
@@ -128,7 +129,64 @@ export default function App() {
   // Modals & Register State
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState<boolean>(false);
   const [isLaptopModalOpen, setIsLaptopModalOpen] = useState<boolean>(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState<boolean>(false);
   const [scannedItemIndex, setScannedItemIndex] = useState<number>(0);
+
+  // Handle Game Reset
+  const handleConfirmResetGame = () => {
+    localStorage.removeItem('supermarket_sim_state');
+    setIsResetModalOpen(false);
+    setIsRegisterModalOpen(false);
+    setIsLaptopModalOpen(false);
+
+    setGameState({
+      day: 1,
+      timeOfDay: '09:00',
+      cash: 500.0,
+      reputation: 75,
+      storeName: 'MY SUPERMARKET',
+      storeSignColor: '#0284c7',
+      isStoreNameConfigured: false,
+      isEditLayoutMode: false,
+      checkoutPosition: [-0.8, 0, 2.5],
+      checkoutRotation: 0,
+      storeLevel: 1,
+      exp: 0,
+      nextLevelExp: 100,
+      isStoreOpen: false,
+      unlockedStorage: false,
+      unlockedLicenses: ['license_starter', 'license_fresh'],
+      shelves: INITIAL_SHELVES,
+      stockBoxes: [
+        {
+          id: 'box_init_1',
+          productId: 'prod_bread',
+          count: 10,
+          position: [3.2, 0.2, 4.5],
+          isHeldByPlayer: false,
+        },
+      ],
+      customers: [],
+      financialHistory: [],
+      todayStats: {
+        revenue: 0,
+        wholesaleExpenses: 0,
+        staffWages: 0,
+        rentUtilities: 50,
+        itemsSold: 0,
+        customersServed: 0,
+        happyCustomers: 0,
+        reputationGain: 0,
+      },
+      showDaySummaryModal: false,
+      staff: INITIAL_STAFF,
+      heldBoxId: null,
+      selectedTool: 'hand',
+      cameraMode: 'first_person',
+      isRegisterActive: false,
+      activeCheckoutCustomer: null,
+    });
+  };
 
   // Handle Onboarding Name Completion
   const handleCompleteOnboarding = (storeName: string, signColor: string) => {
@@ -623,9 +681,18 @@ export default function App() {
         onToggleSound={handleToggleSound}
         onToggleStoreOpen={handleToggleStoreOpen}
         onToggleLayoutEdit={handleToggleLayoutEdit}
+        onOpenResetModal={() => setIsResetModalOpen(true)}
         onEndDay={handleEndDay}
         isMuted={isMuted}
       />
+
+      {/* Reset Confirmation Modal */}
+      {isResetModalOpen && (
+        <ResetConfirmModal
+          onConfirm={handleConfirmResetGame}
+          onClose={() => setIsResetModalOpen(false)}
+        />
+      )}
 
       {/* Onboarding Modal: Store Exterior Name & Sign Setup */}
       {!gameState.isStoreNameConfigured && (

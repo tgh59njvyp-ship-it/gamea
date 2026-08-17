@@ -4,7 +4,7 @@ import * as THREE from 'three';
 const textureCache = new Map<string, THREE.CanvasTexture>();
 
 /**
- * Creates a procedural 2D canvas texture for product labels
+ * Creates procedural 2D canvas texture for authentic Supermarket Simulator product labels
  */
 export function createProductLabelTexture(
   productName: string,
@@ -19,74 +19,227 @@ export function createProductLabelTexture(
   }
 
   const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 256;
+  canvas.width = 512;
+  canvas.height = 512;
   const ctx = canvas.getContext('2d');
 
   if (ctx) {
-    // Fill Background
     ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, 256, 256);
+    ctx.fillRect(0, 0, 512, 512);
 
-    // Decorative Top Brand Band
-    ctx.fillStyle = brandColor;
-    ctx.fillRect(0, 0, 256, 75);
+    if (productName.includes('SUSU') || productName.includes('砂糖') || productName.includes('Sugar')) {
+      // SUSU Sucre en Poudre Brand (Green/Red/White)
+      ctx.fillStyle = '#15803d'; // Green Top Header
+      ctx.fillRect(0, 0, 512, 180);
 
-    // Bottom Accent Ribbon
-    ctx.fillStyle = accentColor;
-    ctx.fillRect(0, 220, 256, 36);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'extrabold 90px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('SUSU', 256, 120);
 
-    // Outer Border
-    ctx.strokeStyle = brandColor;
-    ctx.lineWidth = 8;
-    ctx.strokeRect(4, 4, 248, 248);
+      ctx.font = 'bold 28px sans-serif';
+      ctx.fillText('SINCE 1865', 256, 160);
 
-    // Circle Badge / Symbol in Top Center
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(128, 40, 24, 0, Math.PI * 2);
-    ctx.fill();
+      ctx.fillStyle = '#dc2626'; // Red Fruit Ribbon
+      ctx.fillRect(0, 180, 512, 50);
 
-    ctx.fillStyle = brandColor;
-    ctx.font = 'bold 22px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(iconSymbol, 128, 42);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 26px sans-serif';
+      ctx.fillText('Sucre en Poudre', 256, 215);
 
-    // Product Title Line 1 (English / Short)
-    ctx.fillStyle = '#0f172a';
-    ctx.font = 'black 22px sans-serif';
-    ctx.textAlign = 'center';
+      // Sugar graphic circles / berries
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(180, 320, 40, 0, Math.PI * 2);
+      ctx.arc(256, 300, 50, 0, Math.PI * 2);
+      ctx.arc(330, 320, 40, 0, Math.PI * 2);
+      ctx.fill();
 
-    // Extract short name
-    const shortName = productName.split(' ')[0] || productName;
-    ctx.fillText(shortName.substring(0, 12), 128, 120);
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'black 36px sans-serif';
+      ctx.fillText('FINE SUGAR 1kg', 256, 420);
+    } else if (productName.includes('PANZATI') || productName.includes('スパゲッティ') || productName.includes('Penne')) {
+      // PANZATI Penne Pasta Brand (Bright Red Bag)
+      ctx.fillStyle = '#dc2626'; // Vibrant Red
+      ctx.fillRect(0, 0, 512, 512);
 
-    // Subtitle / Japanese Label
-    ctx.fillStyle = '#475569';
-    ctx.font = 'bold 15px sans-serif';
-    const subName = productName.split('(')[1]?.replace(')', '') || 'SUPERMARKET';
-    ctx.fillText(subName.substring(0, 14), 128, 150);
+      // Green & Yellow Oval Logo Badge
+      ctx.fillStyle = '#16a34a';
+      ctx.beginPath();
+      ctx.ellipse(256, 160, 180, 80, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 12;
+      ctx.stroke();
 
-    // Barcode Graphic at Bottom
-    ctx.fillStyle = '#1e293b';
-    const barY = 175;
-    const barWidths = [3, 1, 4, 2, 1, 5, 2, 1, 3, 4, 2, 1, 3, 2, 4, 1, 2];
-    let currX = 40;
-    for (let w of barWidths) {
-      ctx.fillRect(currX, barY, w, 32);
-      currX += w + 2;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'black 64px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('PANZATI', 256, 180);
+
+      ctx.fillStyle = '#fef08a';
+      ctx.font = 'bold 42px sans-serif';
+      ctx.fillText('Penne Rigate', 256, 310);
+
+      // Pasta Silhouette graphics
+      ctx.fillStyle = '#fde047';
+      for (let i = 0; i < 6; i++) {
+        ctx.fillRect(120 + i * 50, 360, 24, 70);
+      }
+    } else if (productName.includes('CHOKIPIK') || productName.includes('シリアル') || productName.includes('Cereal')) {
+      // CHOKIPIK Chocolate Cereal Brand (Purple/Brown with Bear)
+      ctx.fillStyle = '#581c87'; // Deep Purple
+      ctx.fillRect(0, 0, 512, 512);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'black 72px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('CHOKIPIK', 256, 120);
+
+      ctx.fillStyle = '#fef08a';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.fillText('STRONG CHOCOLATE CEREAL', 256, 160);
+
+      // Cute Bear Character Face
+      ctx.fillStyle = '#78350f';
+      ctx.beginPath();
+      ctx.arc(256, 300, 90, 0, Math.PI * 2); // Head
+      ctx.arc(180, 220, 35, 0, Math.PI * 2); // Left Ear
+      ctx.arc(332, 220, 35, 0, Math.PI * 2); // Right Ear
+      ctx.fill();
+
+      // Snout
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.arc(256, 320, 40, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#1e1b4b';
+      ctx.beginPath();
+      ctx.arc(256, 305, 15, 0, Math.PI * 2); // Nose
+      ctx.fill();
+
+      // Chocolate Cereal Balls
+      ctx.fillStyle = '#451a03';
+      for (let x = 120; x <= 390; x += 45) {
+        ctx.beginPath();
+        ctx.arc(x, 440, 20, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (productName.includes('MASTER') || productName.includes('小麦粉') || productName.includes('Flour')) {
+      // MASTER FLOUR Brand (Blue/Cyan Bag with Wheat ears)
+      ctx.fillStyle = '#0284c7'; // Cyan/Blue
+      ctx.fillRect(0, 0, 512, 512);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'black 58px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('MASTER FLOUR', 256, 130);
+
+      // Wheat ears graphic
+      ctx.fillStyle = '#facc15';
+      ctx.font = 'bold 60px sans-serif';
+      ctx.fillText('🌾 🌾 🌾', 256, 230);
+
+      ctx.fillStyle = '#e0f2fe';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText('CLASSIC WHITE FLOUR', 256, 340);
+      ctx.fillText('NET WT 1KG', 256, 420);
+    } else {
+      // Generic High-Quality Brand Label
+      ctx.fillStyle = brandColor;
+      ctx.fillRect(0, 0, 512, 140);
+
+      ctx.fillStyle = accentColor;
+      ctx.fillRect(0, 440, 512, 72);
+
+      ctx.strokeStyle = brandColor;
+      ctx.lineWidth = 12;
+      ctx.strokeRect(8, 8, 496, 496);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'black 52px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(productName.substring(0, 14), 256, 90);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'black 48px sans-serif';
+      ctx.fillText(productName.split('(')[0] || productName, 256, 260);
+
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.fillText('PREMIUM QUALITY', 256, 320);
     }
 
-    // Weight/Net Vol Tag
-    ctx.fillStyle = '#059669';
-    ctx.font = 'extrabold 14px sans-serif';
-    ctx.fillText('NET 100%', 200, 192);
+    // Barcode at bottom
+    ctx.fillStyle = '#0f172a';
+    const barY = 460;
+    const barWidths = [4, 2, 6, 3, 2, 8, 3, 2, 5, 6, 3, 2, 5, 3, 6, 2, 4];
+    let currX = 100;
+    for (let w of barWidths) {
+      ctx.fillRect(currX, barY, w, 40);
+      currX += w + 4;
+    }
   }
 
   const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = THREE.ClampToEdgeWrapping;
-  texture.wrapT = THREE.ClampToEdgeWrapping;
+  textureCache.set(cacheKey, texture);
+  return texture;
+}
+
+/**
+ * Creates procedural 2D canvas texture for Yellow Shelf Price Tags
+ */
+export function createShelfTagTexture(
+  priceFormatted: string = '$ 3.50',
+  itemCount: number = 12
+): THREE.CanvasTexture {
+  const cacheKey = `shelf_tag_${priceFormatted}_${itemCount}`;
+  if (textureCache.has(cacheKey)) {
+    return textureCache.get(cacheKey)!;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+
+  if (ctx) {
+    // Yellow Tag Base Background
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(0, 0, 256, 128);
+
+    // Black Border
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(3, 3, 250, 122);
+
+    // Left Quantity Box
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(8, 8, 56, 112);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'black 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${itemCount}`, 36, 64);
+
+    // Price Display
+    ctx.fillStyle = '#000000';
+    ctx.font = 'black 38px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(priceFormatted, 150, 50);
+
+    // Barcode Graphic
+    const barY = 85;
+    const widths = [2, 1, 3, 2, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3];
+    let cx = 80;
+    for (let w of widths) {
+      ctx.fillRect(cx, barY, w, 28);
+      cx += w + 2;
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
   textureCache.set(cacheKey, texture);
   return texture;
 }

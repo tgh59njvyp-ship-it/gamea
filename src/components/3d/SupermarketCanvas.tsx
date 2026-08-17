@@ -16,7 +16,7 @@ import {
 } from '../../utils/constants';
 import { soundManager } from '../../utils/audio';
 import { TouchController } from '../ui/TouchController';
-import { createProduct3DMesh, createCardboardBoxTexture } from '../../utils/productMeshBuilder';
+import { createProduct3DMesh, createCardboardBoxTexture, createShelfTagTexture } from '../../utils/productMeshBuilder';
 
 interface SupermarketCanvasProps {
   gameState: GameState;
@@ -280,6 +280,22 @@ export const SupermarketCanvas: React.FC<SupermarketCanvasProps> = ({
                 shelfGroup.add(prodMesh);
               }
             }
+
+            // Yellow Shelf Tag Holder on Front Lip (Supermarket Simulator Replica)
+            const priceTagTex = createShelfTagTexture(
+              product && typeof product.currentPrice === 'number' ? `$ ${product.currentPrice.toFixed(2)}` : '$ -',
+              slotData?.count || 0
+            );
+            const tagMesh = new THREE.Mesh(
+              new THREE.PlaneGeometry(0.18, 0.08),
+              new THREE.MeshStandardMaterial({
+                map: priceTagTex,
+                roughness: 0.2,
+                side: THREE.DoubleSide,
+              })
+            );
+            tagMesh.position.set(xOff, yH + 0.04, 0.26);
+            shelfGroup.add(tagMesh);
           });
         });
       } else if (shelf.type === ShelfType.REFRIGERATOR) {
@@ -540,7 +556,67 @@ export const SupermarketCanvas: React.FC<SupermarketCanvasProps> = ({
       scene.add(custGroup);
     });
 
-    // 11. MOUSE CONTROLS & RAYCASTING
+    // 11. GREEN SELECTION BOX HIGHLIGHT
+    const selectionBoxGeo = new THREE.BoxGeometry(0.72, 0.42, 0.52);
+    const selectionBoxEdges = new THREE.EdgesGeometry(selectionBoxGeo);
+    const selectionBoxMat = new THREE.LineBasicMaterial({ color: '#22c55e', linewidth: 3 });
+    const selectionHighlightMesh = new THREE.LineSegments(selectionBoxEdges, selectionBoxMat);
+    selectionHighlightMesh.visible = false;
+    scene.add(selectionHighlightMesh);
+
+    // 12. FIRST-PERSON HELD CARDBOARD BOX IN HANDS
+    const heldBoxGroup = new THREE.Group();
+    if (gameState.heldBoxId) {
+      const heldBoxData = gameState.stockBoxes.find((b) => b.id === gameState.heldBoxId);
+      const product = heldBoxData?.productId ? productsMap.get(heldBoxData.productId) : null;
+
+      // Cardboard box outer body
+      const boxTex = createCardboardBoxTexture(
+        product?.name || 'SUPERMARKET ITEMS',
+        heldBoxData?.count || 10,
+        product?.color || '#b45309'
+      );
+      const boxMat = new THREE.MeshStandardMaterial({ map: boxTex, roughness: 0.8 });
+
+      // Main box frame
+      const boxBody = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.35, 0.45), boxMat);
+      heldBoxGroup.add(boxBody);
+
+      // Open Flaps at top
+      const flapMat = new THREE.MeshStandardMaterial({ color: '#c28544', roughness: 0.8 });
+      const flap1 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.02, 0.15), flapMat);
+      flap1.position.set(0, 0.2, -0.26);
+      flap1.rotation.x = -Math.PI / 4;
+      heldBoxGroup.add(flap1);
+
+      const flap2 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.02, 0.15), flapMat);
+      flap2.position.set(0, 0.2, 0.26);
+      flap2.rotation.x = Math.PI / 4;
+      heldBoxGroup.add(flap2);
+
+      // Inside items stacked inside open box
+      if (product && heldBoxData) {
+        const itemCount = Math.min(heldBoxData.count, 6);
+        for (let i = 0; i < itemCount; i++) {
+          const col = i % 3;
+          const row = Math.floor(i / 3);
+          const px = (col - 1) * 0.18;
+          const pz = (row - 0.5) * 0.18;
+
+          const pMesh = createProduct3DMesh(product.id, product.shape, product.color, product.name);
+          pMesh.scale.set(0.85, 0.85, 0.85);
+          pMesh.position.set(px, 0.02, pz);
+          heldBoxGroup.add(pMesh);
+        }
+      }
+
+      heldBoxGroup.position.set(0.1, -0.32, -0.65);
+      heldBoxGroup.rotation.set(0.15, -0.1, 0);
+      camera.add(heldBoxGroup);
+      scene.add(camera);
+    }
+
+    // 13. MOUSE CONTROLS & RAYCASTING
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
@@ -571,8 +647,15 @@ export const SupermarketCanvas: React.FC<SupermarketCanvasProps> = ({
       const intersects = raycaster.intersectObjects(interactiveObjects, true);
 
       if (intersects.length > 0) {
-        const data = intersects[0].object.userData;
+        const obj = intersects[0].object;
+        const data = obj.userData;
         if (data.type === 'slot') {
+          // Position green highlight box over targeted slot
+          const worldPos = new THREE.Vector3();
+          obj.getWorldPosition(worldPos);
+          selectionHighlightMesh.position.copy(worldPos);
+          selectionHighlightMesh.visible = true;
+
           if (gameState.heldBoxId) {
             setHoverText('クリックして商品を棚に補給・陳列');
           } else if (data.product) {
@@ -580,18 +663,22 @@ export const SupermarketCanvas: React.FC<SupermarketCanvasProps> = ({
           } else {
             setHoverText('空き棚スロット (段ボールを持ってクリックで補充)');
           }
-        } else if (data.type === 'box') {
-          setHoverText(`段ボール箱 [${data.product?.name || '商品'}] (クリックして持ち上げる)`);
-        } else if (data.type === 'register') {
-          setHoverText('レジスター会計画面を開く (クリック)');
-        } else if (data.type === 'laptop') {
-          setHoverText('発注・経営用PCを開く (クリック)');
-        } else if (data.type === 'sign') {
-          setHoverText(`店舗看板 (クリックで ${gameState.isStoreOpen ? '閉店' : '開店'} に変更)`);
-        } else if (data.type === 'trash') {
-          setHoverText('ダンボール回収ゴミ箱 (空箱を持ってクリックで処分)');
+        } else {
+          selectionHighlightMesh.visible = false;
+          if (data.type === 'box') {
+            setHoverText(`段ボール箱 [${data.product?.name || '商品'}] (クリックして持ち上げる)`);
+          } else if (data.type === 'register') {
+            setHoverText('レジスター会計画面を開く (クリック)');
+          } else if (data.type === 'laptop') {
+            setHoverText('発注・経営用PCを開く (クリック)');
+          } else if (data.type === 'sign') {
+            setHoverText(`店舗看板 (クリックで ${gameState.isStoreOpen ? '閉店' : '開店'} に変更)`);
+          } else if (data.type === 'trash') {
+            setHoverText('ダンボール回収ゴミ箱 (空箱を持ってクリックで処分)');
+          }
         }
       } else {
+        selectionHighlightMesh.visible = false;
         setHoverText(null);
       }
     };
